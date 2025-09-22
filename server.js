@@ -27,20 +27,41 @@ class Game {
     }
 
     makeMove(position, playerId) {
-        if (this.gameStatus !== 'playing') return false;
-        if (this.board[position] !== null) return false;
-        if (this.players[this.currentPlayer] !== playerId) return false;
+        console.log('Make move attempt:', {
+            position,
+            playerId,
+            currentPlayer: this.currentPlayer,
+            gameStatus: this.gameStatus,
+            board: this.board
+        });
+        
+        if (this.gameStatus !== 'playing') {
+            console.log('Move rejected: game not playing');
+            return false;
+        }
+        if (this.board[position] !== null) {
+            console.log('Move rejected: position already taken');
+            return false;
+        }
+        if (this.players[this.currentPlayer] !== playerId) {
+            console.log('Move rejected: not player turn');
+            return false;
+        }
 
         this.board[position] = this.currentPlayer === 0 ? 'X' : 'O';
+        console.log('Move accepted, new board:', this.board);
         
         if (this.checkWinner()) {
             this.gameStatus = 'finished';
             this.winner = this.currentPlayer;
+            console.log('Game finished - winner:', this.winner);
         } else if (this.board.every(cell => cell !== null)) {
             this.gameStatus = 'finished';
             this.winner = -1; // Draw
+            console.log('Game finished - draw');
         } else {
             this.currentPlayer = 1 - this.currentPlayer;
+            console.log('Next player:', this.currentPlayer);
         }
 
         return true;

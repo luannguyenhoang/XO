@@ -465,6 +465,15 @@ class XOGame {
         // Update current player
         this.isMyTurn = gameState.players[gameState.currentPlayer] === this.socket.id;
         
+        // Debug turn logic
+        console.log('Turn update:', {
+            currentPlayer: gameState.currentPlayer,
+            players: gameState.players,
+            mySocketId: this.socket.id,
+            isMyTurn: this.isMyTurn,
+            gameStatus: gameState.gameStatus
+        });
+        
         // Update player indicators
         this.playerX.classList.toggle('active', gameState.currentPlayer === 0);
         this.playerO.classList.toggle('active', gameState.currentPlayer === 1);
