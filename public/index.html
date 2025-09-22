@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game XO Online - Tic Tac Toe</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Game XO Online</h1>
+            <p>Chơi Tic-Tac-Toe với bạn bè real-time!</p>
+        </header>
+
+        <div class="game-area">
+            <div class="game-info">
+                <div class="player-info">
+                    <div class="player" id="player-x">
+                        <span class="symbol">X</span>
+                        <span class="name">Người chơi X</span>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="player" id="player-o">
+                        <span class="symbol">O</span>
+                        <span class="name">Người chơi O</span>
+                    </div>
+                </div>
+                <div class="current-turn" id="current-turn">
+                    Đang chờ người chơi khác...
+                </div>
+            </div>
+
+            <div class="game-board" id="game-board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <div class="game-controls">
+                <button id="join-btn" class="btn primary">Tham gia game</button>
+                <button id="restart-btn" class="btn secondary" style="display: none;">Chơi lại</button>
+                <button id="leave-btn" class="btn danger" style="display: none;">Rời game</button>
+            </div>
+
+            <div class="game-status" id="game-status">
+                <p>Nhấn "Tham gia game" để bắt đầu chơi!</p>
+            </div>
+        </div>
+
+        <div class="connection-status" id="connection-status">
+            <span class="status-dot"></span>
+            <span>Đang kết nối...</span>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
