@@ -13,8 +13,76 @@
             <p>Chơi Tic-Tac-Toe với bạn bè real-time!</p>
         </header>
 
-        <div class="game-area">
+        <!-- Room Selection Screen -->
+        <div class="room-selection" id="room-selection">
+            <h2>Chọn cách chơi</h2>
+            <div class="room-options">
+                <button id="create-room-btn" class="btn primary large">
+                    🏠 Tạo phòng
+                </button>
+                <button id="join-room-btn" class="btn secondary large">
+                    🚪 Tham gia phòng
+                </button>
+                <button id="quick-play-btn" class="btn tertiary large">
+                    ⚡ Chơi nhanh
+                </button>
+            </div>
+        </div>
+
+        <!-- Create Room Screen -->
+        <div class="create-room" id="create-room" style="display: none;">
+            <h2>Tạo phòng mới</h2>
+            <div class="room-info">
+                <div class="room-code-display">
+                    <label>Mã phòng:</label>
+                    <div class="code-container">
+                        <span id="room-code" class="room-code">------</span>
+                        <button id="copy-code-btn" class="btn small">📋</button>
+                    </div>
+                </div>
+                <div class="players-list">
+                    <h3>Người chơi trong phòng:</h3>
+                    <ul id="room-players-list">
+                        <li>Đang chờ người chơi khác...</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="room-controls">
+                <button id="start-room-game-btn" class="btn primary" disabled>
+                    Bắt đầu game
+                </button>
+                <button id="cancel-create-room-btn" class="btn danger">
+                    Hủy
+                </button>
+            </div>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div class="join-room" id="join-room" style="display: none;">
+            <h2>Tham gia phòng</h2>
+            <div class="join-form">
+                <div class="input-group">
+                    <label for="room-code-input">Nhập mã phòng:</label>
+                    <input type="text" id="room-code-input" placeholder="Nhập mã phòng (6 ký tự)" maxlength="6">
+                </div>
+                <div class="join-controls">
+                    <button id="confirm-join-btn" class="btn primary">
+                        Tham gia
+                    </button>
+                    <button id="cancel-join-btn" class="btn danger">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="game-area" id="game-area" style="display: none;">
             <div class="game-info">
+                <div class="room-info-display" id="room-info-display" style="display: none;">
+                    <span class="room-label">Phòng:</span>
+                    <span id="current-room-code" class="room-code-small"></span>
+                </div>
                 <div class="player-info">
                     <div class="player" id="player-x">
                         <span class="symbol">X</span>
@@ -47,6 +115,7 @@
                 <button id="join-btn" class="btn primary">Tham gia game</button>
                 <button id="restart-btn" class="btn secondary" style="display: none;">Chơi lại</button>
                 <button id="leave-btn" class="btn danger" style="display: none;">Rời game</button>
+                <button id="leave-room-btn" class="btn danger" style="display: none;">Rời phòng</button>
             </div>
 
             <div class="game-status" id="game-status">

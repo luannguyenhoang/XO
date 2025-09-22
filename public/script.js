@@ -4,6 +4,9 @@ class XOGame {
         this.gameId = null;
         this.playerSymbol = null;
         this.isMyTurn = false;
+        this.currentRoomCode = null;
+        this.isHost = false;
+        this.gameMode = 'menu'; // menu, quickplay, room
         
         this.initializeElements();
         this.setupEventListeners();
@@ -21,10 +24,35 @@ class XOGame {
     }
 
     initializeElements() {
+        // Room selection elements
+        this.roomSelection = document.getElementById('room-selection');
+        this.createRoomBtn = document.getElementById('create-room-btn');
+        this.joinRoomBtn = document.getElementById('join-room-btn');
+        this.quickPlayBtn = document.getElementById('quick-play-btn');
+        
+        // Create room elements
+        this.createRoomDiv = document.getElementById('create-room');
+        this.roomCode = document.getElementById('room-code');
+        this.copyCodeBtn = document.getElementById('copy-code-btn');
+        this.roomPlayersList = document.getElementById('room-players-list');
+        this.startRoomGameBtn = document.getElementById('start-room-game-btn');
+        this.cancelCreateRoomBtn = document.getElementById('cancel-create-room-btn');
+        
+        // Join room elements
+        this.joinRoom = document.getElementById('join-room');
+        this.roomCodeInput = document.getElementById('room-code-input');
+        this.confirmJoinBtn = document.getElementById('confirm-join-btn');
+        this.cancelJoinBtn = document.getElementById('cancel-join-btn');
+        
+        // Game area elements
+        this.gameArea = document.getElementById('game-area');
+        this.roomInfoDisplay = document.getElementById('room-info-display');
+        this.currentRoomCodeDisplay = document.getElementById('current-room-code');
         this.gameBoard = document.getElementById('game-board');
         this.joinBtn = document.getElementById('join-btn');
         this.restartBtn = document.getElementById('restart-btn');
         this.leaveBtn = document.getElementById('leave-btn');
+        this.leaveRoomBtn = document.getElementById('leave-room-btn');
         this.gameStatus = document.getElementById('game-status');
         this.currentTurn = document.getElementById('current-turn');
         this.connectionStatus = document.getElementById('connection-status');
@@ -39,27 +67,112 @@ class XOGame {
     }
 
     setupEventListeners() {
-        // Join game button
-        this.joinBtn.addEventListener('click', () => {
-            this.joinGame();
-        });
+        console.log('Setting up event listeners...');
+        console.log('createRoomBtn:', this.createRoomBtn);
+        console.log('createRoom method:', typeof this.createRoom);
+        
+        // Room selection buttons
+        if (this.createRoomBtn) {
+            this.createRoomBtn.addEventListener('click', () => {
+                console.log('Create room button clicked');
+                if (typeof this.createRoom === 'function') {
+                    this.createRoom();
+                } else {
+                    console.error('createRoom is not a function!');
+                }
+            });
+        }
 
-        // Restart game button
-        this.restartBtn.addEventListener('click', () => {
-            this.restartGame();
-        });
+        if (this.joinRoomBtn) {
+            this.joinRoomBtn.addEventListener('click', () => {
+                this.showJoinRoom();
+            });
+        }
 
-        // Leave game button
-        this.leaveBtn.addEventListener('click', () => {
-            this.leaveGame();
-        });
+        if (this.quickPlayBtn) {
+            this.quickPlayBtn.addEventListener('click', () => {
+                this.quickPlay();
+            });
+        }
+
+        // Create room buttons
+        if (this.copyCodeBtn) {
+            this.copyCodeBtn.addEventListener('click', () => {
+                this.copyRoomCode();
+            });
+        }
+
+        if (this.startRoomGameBtn) {
+            this.startRoomGameBtn.addEventListener('click', () => {
+                this.startRoomGame();
+            });
+        }
+
+        if (this.cancelCreateRoomBtn) {
+            this.cancelCreateRoomBtn.addEventListener('click', () => {
+                this.cancelCreateRoom();
+            });
+        }
+
+        // Join room buttons
+        if (this.confirmJoinBtn) {
+            this.confirmJoinBtn.addEventListener('click', () => {
+                this.confirmJoinRoom();
+            });
+        }
+
+        if (this.cancelJoinBtn) {
+            this.cancelJoinBtn.addEventListener('click', () => {
+                this.cancelJoinRoom();
+            });
+        }
+
+        // Room code input
+        if (this.roomCodeInput) {
+            this.roomCodeInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toUpperCase();
+            });
+
+            this.roomCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.confirmJoinRoom();
+                }
+            });
+        }
+
+        // Game buttons
+        if (this.joinBtn) {
+            this.joinBtn.addEventListener('click', () => {
+                this.joinGame();
+            });
+        }
+
+        if (this.restartBtn) {
+            this.restartBtn.addEventListener('click', () => {
+                this.restartGame();
+            });
+        }
+
+        if (this.leaveBtn) {
+            this.leaveBtn.addEventListener('click', () => {
+                this.leaveGame();
+            });
+        }
+
+        if (this.leaveRoomBtn) {
+            this.leaveRoomBtn.addEventListener('click', () => {
+                this.leaveRoom();
+            });
+        }
 
         // Cell clicks
-        this.gameBoard.addEventListener('click', (e) => {
-            if (e.target.classList.contains('cell')) {
-                this.makeMove(parseInt(e.target.dataset.index));
-            }
-        });
+        if (this.gameBoard) {
+            this.gameBoard.addEventListener('click', (e) => {
+                if (e.target.classList.contains('cell')) {
+                    this.makeMove(parseInt(e.target.dataset.index));
+                }
+            });
+        }
     }
 
     setupSocketListeners() {
@@ -94,6 +207,17 @@ class XOGame {
             this.updateGameStatus('Game đã bắt đầu! Bạn là ' + this.playerSymbol);
             this.updateUI(gameState);
             this.showGameControls();
+            
+            // Show room info if in room mode
+            if (this.gameMode === 'room' && this.currentRoomCode) {
+                this.roomInfoDisplay.style.display = 'block';
+                this.currentRoomCodeDisplay.textContent = this.currentRoomCode;
+                this.leaveRoomBtn.style.display = 'inline-block';
+            }
+            
+            // Hide room screens and show game
+            this.hideAllScreens();
+            this.gameArea.style.display = 'block';
         });
 
         this.socket.on('game-updated', (gameState) => {
@@ -101,6 +225,18 @@ class XOGame {
         });
 
         this.socket.on('game-restarted', (gameState) => {
+            // Clear any existing state first
+            this.clearWinningCells();
+            
+            // Reset all UI elements to default state
+            this.playerX.classList.remove('active');
+            this.playerO.classList.remove('active');
+            this.currentTurn.textContent = 'Đang chờ người chơi khác...';
+            
+            // Reset UI state
+            this.isMyTurn = gameState.players[gameState.currentPlayer] === this.socket.id;
+            
+            // Update UI with fresh state
             this.updateUI(gameState);
             this.updateGameStatus('Game đã được khởi động lại!');
         });
@@ -109,6 +245,170 @@ class XOGame {
             this.updateGameStatus('Đối thủ đã rời game!');
             this.resetGame();
         });
+
+        // Room events
+        this.socket.on('room-created', (data) => {
+            console.log('Room created event received:', data);
+            this.currentRoomCode = data.roomCode;
+            this.isHost = true;
+            this.gameMode = 'room';
+            
+            if (this.roomCode) {
+                this.roomCode.textContent = data.roomCode;
+                console.log('Room code displayed:', data.roomCode);
+            } else {
+                console.error('roomCode element not found!');
+            }
+            
+            this.hideAllScreens();
+            if (this.createRoomDiv) {
+                this.createRoomDiv.style.display = 'block';
+            }
+            this.updateRoomPlayers(data.players);
+        });
+
+        this.socket.on('room-updated', (data) => {
+            console.log('Room updated event received:', data);
+            this.currentRoomCode = data.roomCode;
+            this.gameMode = 'room';
+            
+            // If this is the first time joining a room, show create room screen
+            if (!this.isHost) {
+                this.hideAllScreens();
+                this.createRoomDiv.style.display = 'block';
+                this.roomCode.textContent = data.roomCode;
+            }
+            
+            this.updateRoomPlayers(data.players);
+            if (data.players.length === 2) {
+                this.startRoomGameBtn.disabled = false;
+            } else {
+                this.startRoomGameBtn.disabled = true;
+            }
+        });
+
+        this.socket.on('room-join-failed', (data) => {
+            alert(data.message);
+        });
+
+        this.socket.on('start-game-failed', (data) => {
+            alert(data.message);
+        });
+    }
+
+    // Room management methods
+    createRoom() {
+        if (!this.socket) {
+            console.error('Socket not connected');
+            return;
+        }
+        console.log('Creating room...');
+        this.socket.emit('create-room');
+    }
+
+    showJoinRoom() {
+        if (!this.joinRoom || !this.roomCodeInput) {
+            console.error('Join room elements not found');
+            return;
+        }
+        this.hideAllScreens();
+        this.joinRoom.style.display = 'block';
+        this.roomCodeInput.focus();
+    }
+
+    quickPlay() {
+        this.gameMode = 'quickplay';
+        this.hideAllScreens();
+        if (this.gameArea) {
+            this.gameArea.style.display = 'block';
+        }
+        this.joinGame();
+    }
+
+    copyRoomCode() {
+        navigator.clipboard.writeText(this.roomCode.textContent).then(() => {
+            this.copyCodeBtn.textContent = '✅';
+            setTimeout(() => {
+                this.copyCodeBtn.textContent = '📋';
+            }, 2000);
+        });
+    }
+
+    startRoomGame() {
+        if (!this.socket || !this.currentRoomCode) return;
+        this.socket.emit('start-room-game', { roomCode: this.currentRoomCode });
+    }
+
+    cancelCreateRoom() {
+        if (this.currentRoomCode) {
+            this.socket.emit('leave-room', { roomCode: this.currentRoomCode });
+        }
+        this.hideAllScreens();
+        this.roomSelection.style.display = 'block';
+        this.resetRoomState();
+    }
+
+    confirmJoinRoom() {
+        const roomCode = this.roomCodeInput.value.trim().toUpperCase();
+        if (roomCode.length !== 6) {
+            alert('Mã phòng phải có 6 ký tự!');
+            return;
+        }
+        this.joinRoomByCode(roomCode);
+    }
+
+    joinRoomByCode(roomCode) {
+        if (!this.socket) {
+            this.updateGameStatus('Chưa kết nối được server. Vui lòng refresh trang.');
+            return;
+        }
+        console.log('Attempting to join room:', roomCode);
+        this.socket.emit('join-room', { roomCode });
+    }
+
+    cancelJoinRoom() {
+        this.hideAllScreens();
+        this.roomSelection.style.display = 'block';
+        this.roomCodeInput.value = '';
+    }
+
+    leaveRoom() {
+        if (this.currentRoomCode && this.socket) {
+            this.socket.emit('leave-room', { roomCode: this.currentRoomCode });
+        }
+        this.hideAllScreens();
+        this.roomSelection.style.display = 'block';
+        this.resetRoomState();
+    }
+
+    hideAllScreens() {
+        this.roomSelection.style.display = 'none';
+        this.createRoomDiv.style.display = 'none';
+        this.joinRoom.style.display = 'none';
+        this.gameArea.style.display = 'none';
+    }
+
+    resetRoomState() {
+        this.currentRoomCode = null;
+        this.isHost = false;
+        this.gameMode = 'menu';
+        this.roomCode.textContent = '------';
+        this.roomPlayersList.innerHTML = '<li>Đang chờ người chơi khác...</li>';
+        this.startRoomGameBtn.disabled = true;
+        this.roomCodeInput.value = '';
+    }
+
+    updateRoomPlayers(players) {
+        this.roomPlayersList.innerHTML = '';
+        if (players.length === 0) {
+            this.roomPlayersList.innerHTML = '<li>Đang chờ người chơi khác...</li>';
+        } else {
+            players.forEach((playerId, index) => {
+                const li = document.createElement('li');
+                li.textContent = `Người chơi ${index + 1}${playerId === this.socket.id ? ' (Bạn)' : ''}`;
+                this.roomPlayersList.appendChild(li);
+            });
+        }
     }
 
     joinGame() {
@@ -131,7 +431,13 @@ class XOGame {
     restartGame() {
         if (!this.gameId || !this.socket) return;
         
-        this.socket.emit('restart-game', this.gameId);
+        // Clear any existing winning cells and animations
+        this.clearWinningCells();
+        
+        // Small delay to ensure UI is cleared before restart
+        setTimeout(() => {
+            this.socket.emit('restart-game', this.gameId);
+        }, 100);
     }
 
     leaveGame() {
@@ -142,10 +448,10 @@ class XOGame {
     }
 
     updateUI(gameState) {
-        // Update board
+        // Update board - Reset all cells first
         this.gameBoard.querySelectorAll('.cell').forEach((cell, index) => {
             cell.textContent = '';
-            cell.className = 'cell';
+            cell.className = 'cell'; // Reset all classes including 'winning'
             
             if (gameState.board[index] === 'X') {
                 cell.textContent = 'X';
@@ -212,6 +518,18 @@ class XOGame {
         }
     }
 
+    clearWinningCells() {
+        // Clear all winning animations and classes
+        this.gameBoard.querySelectorAll('.cell').forEach(cell => {
+            // Add clearing class to stop animations immediately
+            cell.classList.add('clearing');
+            
+            // Remove all game-related classes
+            cell.classList.remove('winning', 'x', 'o', 'clearing');
+            cell.textContent = '';
+        });
+    }
+
     updateGameStatus(message, type = '') {
         this.gameStatus.textContent = message;
         this.gameStatus.className = `game-status ${type}`;
@@ -259,6 +577,20 @@ class XOGame {
         this.joinBtn.textContent = 'Tham gia game';
         this.restartBtn.style.display = 'none';
         this.leaveBtn.style.display = 'none';
+        this.leaveRoomBtn.style.display = 'none';
+        this.roomInfoDisplay.style.display = 'none';
+        
+        // Return to appropriate screen based on game mode
+        if (this.gameMode === 'room' && this.currentRoomCode) {
+            this.hideAllScreens();
+            this.createRoomDiv.style.display = 'block';
+        } else if (this.gameMode === 'quickplay') {
+            this.hideAllScreens();
+            this.gameArea.style.display = 'block';
+        } else {
+            this.hideAllScreens();
+            this.roomSelection.style.display = 'block';
+        }
     }
 }
 
